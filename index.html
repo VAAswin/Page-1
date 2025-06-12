@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Process Improvement & Solution Roadmap</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony -->
+    <!-- Application Structure Plan: A thematic, single-page narrative dashboard. The user scrolls through a logical story: The Problem (As-Is Process + Pain Points), The Solution (Opportunities + Solution Tree), and The Plan (Prioritization Roadmap). A sticky top navigation allows users to jump between these key sections. This structure was chosen to guide stakeholders through the complex information logically, making it easier to digest than the original document's structure. The focus is on linking problems directly to their proposed solutions visually. -->
+    <!-- Visualization & Content Choices: 
+        - As-Is Process: Goal: Organize. Method: Interactive HTML/CSS vertical timeline. Interaction: Hover to highlight. Justification: Clearly shows sequence and complexity.
+        - Pain Points: Goal: Compare/Inform. Method: Grid of cards + Chart.js Bar Chart for BOM Time. Interaction: Click to filter related solutions. Justification: Quantifies the problems, making them tangible. The chart immediately highlights the time-delay issue.
+        - Solution Tree: Goal: Organize. Method: HTML/CSS nested flexbox diagram. Justification: Visually represents the strategic hierarchy of solutions without using forbidden SVG/Mermaid.
+        - Prioritization: Goal: Organize/Compare. Method: Three-column layout for High/Medium/Low priority. Interaction: Clickable cards linking back to pain points. Justification: Provides a clear, actionable roadmap.
+        - Hardware Criteria: Goal: Inform. Method: Icon-based list. Justification: Simple, clean presentation of guiding principles.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F8F7F4;
+            color: #3D405B;
+        }
+        .nav-link {
+            transition: color 0.3s ease, border-bottom-color 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #81B29A;
+            border-bottom-color: #81B29A;
+        }
+        .card {
+            background-color: #FFFFFF;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.1);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .solution-tree-node {
+            border: 2px solid #E0E0E0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            background-color: white;
+        }
+        .solution-tree-branch {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            position: relative;
+        }
+        .solution-tree-branch::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            width: 2px;
+            height: 20px;
+            background-color: #E0E0E0;
+        }
+        .solution-tree-item::before {
+             content: '';
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            height: 20px;
+            border-left: 2px solid #E0E0E0;
+        }
+        .solution-tree-item:first-child::after, .solution-tree-item:last-child::after {
+            content: '';
+            position: absolute;
+            top: -20px;
+            height: 2px;
+            background-color: #E0E0E0;
+        }
+        .solution-tree-item:first-child::after {
+            left: 50%;
+            width: 50%;
+        }
+         .solution-tree-item:last-child::after {
+            right: 50%;
+            width: 50%;
+        }
+        .solution-tree-item:not(:first-child):not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: #E0E0E0;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <h1 class="text-xl font-bold text-[#3D405B]">Process Optimization</h1>
+                <div class="hidden sm:flex sm:items-baseline sm:space-x-8">
+                    <a href="#problem" class="nav-link px-1 pt-1 pb-2 text-sm font-medium">The Problem</a>
+                    <a href="#solution" class="nav-link px-1 pt-1 pb-2 text-sm font-medium">The Solution</a>
+                    <a href="#roadmap" class="nav-link px-1 pt-1 pb-2 text-sm font-medium">The Roadmap</a>
+                    <a href="#principles" class="nav-link px-1 pt-1 pb-2 text-sm font-medium">Guiding Principles</a>
+                </div>
+                <div class="sm:hidden">
+                    <select id="mobile-nav" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <option value="#problem">The Problem</option>
+                        <option value="#solution">The Solution</option>
+                        <option value="#roadmap">The Roadmap</option>
+                        <option value="#principles">Guiding Principles</option>
+                    </select>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section id="hero" class="py-16 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-4xl font-bold tracking-tight text-[#3D405B] sm:text-5xl">Streamlining Project Assessment & BOM Generation</h2>
+                <p class="mt-6 text-lg leading-8 text-gray-600 max-w-2xl mx-auto">An interactive overview of the current challenges in our project workflow and a strategic plan to enhance efficiency, reduce costs, and improve delivery times.</p>
+            </div>
+        </section>
+
+        <section id="problem" class="py-16 sm:py-24">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold tracking-tight text-[#3D405B] sm:text-4xl">The Problem: An Inefficient Workflow</h2>
+                    <p class="mt-4 text-lg leading-8 text-gray-600 max-w-3xl mx-auto">This section breaks down the current, multi-step process for project assessment and highlights the significant pain points that cause delays, increase costs, and strain our resources. Understanding these challenges is the first step toward building a better system.</p>
+                </div>
+
+                <div class="mt-16 grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-6 text-center">As-Is Process Flow</h3>
+                        <div class="relative pl-8 border-l-2 border-[#81B29A]">
+                            <div class="timeline-step mb-12">
+                                <div class="absolute w-6 h-6 bg-[#81B29A] rounded-full -left-3 border-4 border-white"></div>
+                                <h4 class="font-bold text-lg">1. Initial Assessment</h4>
+                                <p class="text-gray-600">Begins with a plant visit, virtual call, or questionnaire.</p>
+                            </div>
+                            <div class="timeline-step mb-12">
+                               <div class="absolute w-6 h-6 bg-[#81B29A] rounded-full -left-3 border-4 border-white"></div>
+                                <h4 class="font-bold text-lg">2. Scheduling & Scoping</h4>
+                                <p class="text-gray-600">A detailed call is scheduled to decide on a high-level approach and gather low-level details.</p>
+                            </div>
+                            <div class="timeline-step mb-12">
+                               <div class="absolute w-6 h-6 bg-[#81B29A] rounded-full -left-3 border-4 border-white"></div>
+                                <h4 class="font-bold text-lg">3. Assessment Type</h4>
+                                <p class="text-gray-600">Can be a high-level, KPI-based assessment or a detailed one requiring an SI.</p>
+                            </div>
+                            <div class="timeline-step mb-12">
+                               <div class="absolute w-6 h-6 bg-[#81B29A] rounded-full -left-3 border-4 border-white"></div>
+                                <h4 class="font-bold text-lg">4. Analysis</h4>
+                                <p class="text-gray-600">In-depth analysis of zones and machines based on an understanding document.</p>
+                            </div>
+                            <div class="timeline-step mb-12">
+                               <div class="absolute w-6 h-6 bg-[#81B29A] rounded-full -left-3 border-4 border-white"></div>
+                                <h4 class="font-bold text-lg">5. Experience Check</h4>
+                                <p class="text-gray-600">Check for prior, similar work to leverage existing knowledge.</p>
+                            </div>
+                             <div class="timeline-step">
+                               <div class="absolute w-6 h-6 bg-[#81B29A] rounded-full -left-3 border-4 border-white"></div>
+                                <h4 class="font-bold text-lg">6 & 7. BOM Generation</h4>
+                                <p class="text-gray-600">A complex, branching process of researching and combining existing or new devices to create the final Bill of Materials.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-6 text-center">Key Pain Points</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="card p-6">
+                                <h4 class="font-bold text-lg">BOM Creation Time</h4>
+                                <p class="text-gray-600">Takes 24-48 hours, delaying project kick-off.</p>
+                                <div class="chart-container mt-4 h-64 md:h-auto">
+                                    <canvas id="bomTimeChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="card p-6 flex flex-col justify-center">
+                                <h4 class="font-bold text-lg">Resource Dependency</h4>
+                                <p class="text-gray-600">High reliance on experienced resources creates bottlenecks.</p>
+                            </div>
+                            <div class="card p-6 flex flex-col justify-center">
+                                <h4 class="font-bold text-lg">Cost Discrepancy</h4>
+                                <p class="text-gray-600">A 30% cost difference between high-level and detailed assessments leads to budget uncertainty.</p>
+                            </div>
+                             <div class="card p-6">
+                                <h4 class="font-bold text-lg">Manual Research</h4>
+                                <p class="text-gray-600">Time-consuming research for hardware, lead times, and pricing.</p>
+                            </div>
+                            <div class="card p-6 flex flex-col justify-center">
+                                <h4 class="font-bold text-lg">Slow Assessment</h4>
+                                <p class="text-gray-600">Assessment rate of ~3 machines per hour is inefficient.</p>
+                            </div>
+                            <div class="card p-6 flex flex-col justify-center">
+                                 <h4 class="font-bold text-lg">License & Tag Issues</h4>
+                                <p class="text-gray-600">Difficulty enabling licenses and handling missing tags.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="solution" class="py-16 sm:py-24 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold tracking-tight text-[#3D405B] sm:text-4xl">The Solution: A Strategic Approach</h2>
+                    <p class="mt-4 text-lg leading-8 text-gray-600 max-w-3xl mx-auto">Here we outline the opportunities for improvement identified from the pain points and present a hierarchical solution tree. This structure shows how targeted initiatives can address our core challenges and lead to a more optimized workflow.</p>
+                </div>
+
+                <div class="mt-16">
+                    <h3 class="text-2xl font-semibold mb-8 text-center">Opportunities for Improvement</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="card p-6">Automate license and tag management.</div>
+                        <div class="card p-6">Streamline lead time & price information access.</div>
+                        <div class="card p-6">Enhance hardware research with structured processes.</div>
+                        <div class="card p-6">Accelerate assessment time with better tools.</div>
+                        <div class="card p-6">Reduce BOM creation time with automation.</div>
+                        <div class="card p-6">Lessen dependency on experienced resources.</div>
+                    </div>
+                </div>
+
+                <div class="mt-20">
+                     <h3 class="text-2xl font-semibold mb-8 text-center">Solution Tree</h3>
+                     <div class="flex flex-col items-center gap-y-8">
+                        <div class="solution-tree-node font-bold text-lg bg-[#3D405B] text-white">Optimize Project Delivery & Cost-Effectiveness</div>
+                        <div class="w-px h-8 bg-gray-300"></div>
+                        <div class="w-full grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div class="flex flex-col items-center gap-y-4">
+                                <div class="w-full h-px bg-gray-300"></div>
+                                <div class="w-px h-4 bg-gray-300 -mt-4"></div>
+                                <div class="solution-tree-node font-semibold bg-[#81B29A] text-white">Improve Assessment & BOM Efficiency</div>
+                                <div class="w-px h-4 bg-gray-300"></div>
+                                <div class="space-y-4 w-full">
+                                    <div class="solution-tree-node text-sm">Automate Data Collection & Analysis</div>
+                                    <div class="solution-tree-node text-sm">Standardize Assessment Procedures</div>
+                                    <div class="solution-tree-node text-sm">Accelerate BOM Creation Tools</div>
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-center gap-y-4">
+                                 <div class="w-full h-px bg-gray-300"></div>
+                                 <div class="w-px h-4 bg-gray-300 -mt-4"></div>
+                                <div class="solution-tree-node font-semibold bg-[#81B29A] text-white">Enhance Hardware Selection</div>
+                                 <div class="w-px h-4 bg-gray-300"></div>
+                                <div class="space-y-4 w-full">
+                                    <div class="solution-tree-node text-sm">Centralized Hardware Database</div>
+                                    <div class="solution-tree-node text-sm">Automated Vendor & Price Comparison</div>
+                                    <div class="solution-tree-node text-sm">Streamlined New Hardware Evaluation</div>
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-center gap-y-4">
+                                 <div class="w-full h-px bg-gray-300"></div>
+                                 <div class="w-px h-4 bg-gray-300 -mt-4"></div>
+                                <div class="solution-tree-node font-semibold bg-[#81B29A] text-white">Reduce Bottlenecks & Dependencies</div>
+                                 <div class="w-px h-4 bg-gray-300"></div>
+                                <div class="space-y-4 w-full">
+                                    <div class="solution-tree-node text-sm">Develop Training & Documentation</div>
+                                    <div class="solution-tree-node text-sm">Implement License & Tag Management</div>
+                                    <div class="solution-tree-node text-sm">Improve Cost Estimation Models</div>
+                                </div>
+                            </div>
+                        </div>
+                     </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="roadmap" class="py-16 sm:py-24">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                 <div class="text-center">
+                    <h2 class="text-3xl font-bold tracking-tight text-[#3D405B] sm:text-4xl">The Roadmap: A Prioritized Plan</h2>
+                    <p class="mt-4 text-lg leading-8 text-gray-600 max-w-3xl mx-auto">To ensure we deliver value quickly and effectively, the proposed features have been prioritized. This roadmap outlines our focus, starting with the highest-impact initiatives that address our most critical pain points first.</p>
+                </div>
+                <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="priority-col">
+                        <h3 class="text-2xl font-bold text-center mb-6 text-red-600">High Priority</h3>
+                        <div class="space-y-4">
+                            <div class="card p-6">
+                                <h4 class="font-semibold">Automated BOM Creation Tool</h4>
+                                <p class="text-sm text-gray-500">Directly addresses major time delays.</p>
+                            </div>
+                            <div class="card p-6">
+                                <h4 class="font-semibold">Centralized Hardware Database</h4>
+                                 <p class="text-sm text-gray-500">Crucial for solving lead time, price, and research issues.</p>
+                            </div>
+                             <div class="card p-6">
+                                <h4 class="font-semibold">License and Tag Management System</h4>
+                                 <p class="text-sm text-gray-500">Solves a core operational pain point.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="priority-col">
+                        <h3 class="text-2xl font-bold text-center mb-6 text-yellow-600">Medium Priority</h3>
+                         <div class="space-y-4">
+                             <div class="card p-6">
+                                <h4 class="font-semibold">Standardized Assessment Procedure & Tools</h4>
+                                 <p class="text-sm text-gray-500">Improves assessment time and reduces resource dependency.</p>
+                            </div>
+                             <div class="card p-6">
+                                <h4 class="font-semibold">Automated Vendor & Price Comparison</h4>
+                                 <p class="text-sm text-gray-500">Refines hardware selection for better cost control.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="priority-col">
+                        <h3 class="text-2xl font-bold text-center mb-6 text-green-600">Lower Priority</h3>
+                         <div class="space-y-4">
+                             <div class="card p-6">
+                                <h4 class="font-semibold">Comprehensive Training & Documentation</h4>
+                                 <p class="text-sm text-gray-500">Supports long-term scalability and knowledge transfer.</p>
+                            </div>
+                             <div class="card p-6">
+                                <h4 class="font-semibold">Improved Cost Estimation Models</h4>
+                                 <p class="text-sm text-gray-500">Refines budget accuracy over time with new data.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="principles" class="py-16 sm:py-24 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                 <div class="text-center">
+                    <h2 class="text-3xl font-bold tracking-tight text-[#3D405B] sm:text-4xl">Guiding Principles for Hardware Finalization</h2>
+                    <p class="mt-4 text-lg leading-8 text-gray-600 max-w-3xl mx-auto">As we implement these improvements, the final decision on hardware will continue to be guided by a balanced set of core criteria. These principles ensure that our solutions are not only efficient but also robust, cost-effective, and sustainable.</p>
+                </div>
+                <div class="mt-16 max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-3 gap-8 text-center">
+                    <div class="card p-6">
+                        <div class="text-4xl mb-2">⚙️</div>
+                        <h4 class="font-semibold">Specification</h4>
+                    </div>
+                    <div class="card p-6">
+                        <div class="text-4xl mb-2">🚀</div>
+                        <h4 class="font-semibold">Performance</h4>
+                    </div>
+                     <div class="card p-6">
+                        <div class="text-4xl mb-2">💰</div>
+                        <h4 class="font-semibold">Cost</h4>
+                    </div>
+                     <div class="card p-6">
+                        <div class="text-4xl mb-2">🚚</div>
+                        <h4 class="font-semibold">Lead Time</h4>
+                    </div>
+                     <div class="card p-6">
+                        <div class="text-4xl mb-2">🤝</div>
+                        <h4 class="font-semibold">Vendor</h4>
+                    </div>
+                     <div class="card p-6">
+                        <div class="text-4xl mb-2">⏱️</div>
+                        <h4 class="font-semibold">Resolution Time</h4>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-[#3D405B] text-white">
+        <div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-sm">
+            <p>&copy; 2025 Process Optimization Initiative. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const bomTimeCtx = document.getElementById('bomTimeChart').getContext('2d');
+            const bomTimeChart = new Chart(bomTimeCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['High-level', 'Medium', 'Complete'],
+                    datasets: [{
+                        label: 'Time to Create BOM (Hours)',
+                        data: [24, 35, 48],
+                        backgroundColor: [
+                            'rgba(240, 128, 128, 0.6)',
+                            'rgba(230, 180, 100, 0.6)',
+                            'rgba(129, 178, 154, 0.6)'
+                        ],
+                        borderColor: [
+                            'rgba(240, 128, 128, 1)',
+                            'rgba(230, 180, 100, 1)',
+                            'rgba(129, 178, 154, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Hours'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.dataset.label}: ${context.raw} hours`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            const sections = document.querySelectorAll('main section');
+            const navLinks = document.querySelectorAll('.nav-link');
+            const mobileNav = document.getElementById('mobile-nav');
+
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.5
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const id = entry.target.getAttribute('id');
+                        navLinks.forEach(link => {
+                            link.classList.toggle('active', link.getAttribute('href') === `#${id}`);
+                        });
+                        if (mobileNav.value !== `#${id}`) {
+                           mobileNav.value = `#${id}`;
+                        }
+                    }
+                });
+            }, observerOptions);
+
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+
+            mobileNav.addEventListener('change', (e) => {
+                window.location.href = e.target.value;
+            });
+        });
+    </script>
+</body>
+</html>

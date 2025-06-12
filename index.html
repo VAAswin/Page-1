@@ -11,12 +11,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Chosen Palette: Calm Harmony -->
     <!-- Application Structure Plan: A thematic, single-page narrative dashboard. The user scrolls through a logical story: The Problem (As-Is Process + Pain Points), The Solution (Opportunities + Solution Tree), and The Plan (Prioritization Roadmap). A sticky top navigation allows users to jump between these key sections. This structure was chosen to guide stakeholders through the complex information logically, making it easier to digest than the original document's structure. The focus is on linking problems directly to their proposed solutions visually. -->
-    <!-- Visualization & Content Choices: 
-        - As-Is Process: Goal: Organize. Method: Interactive HTML/CSS vertical timeline. Interaction: Hover to highlight. Justification: Clearly shows sequence and complexity.
-        - Pain Points: Goal: Compare/Inform. Method: Grid of cards + Chart.js Bar Chart for BOM Time. Interaction: Click to filter related solutions. Justification: Quantifies the problems, making them tangible. The chart immediately highlights the time-delay issue.
-        - Solution Tree: Goal: Organize. Method: HTML/CSS nested flexbox diagram. Justification: Visually represents the strategic hierarchy of solutions without using forbidden SVG/Mermaid.
-        - Prioritization: Goal: Organize/Compare. Method: Three-column layout for High/Medium/Low priority. Interaction: Clickable cards linking back to pain points. Justification: Provides a clear, actionable roadmap.
-        - Hardware Criteria: Goal: Inform. Method: Icon-based list. Justification: Simple, clean presentation of guiding principles.
+    <!-- Visualization & Content Choices:
+        - As-Is Process: Goal: Organize. Method: HTML/CSS business flow diagram with nodes and connectors. Justification: Clearly shows sequence, decision points, and complexity in a visual format without external libraries like Mermaid or SVG. Animated to appear on scroll.
+        - Pain Points: Goal: Compare/Inform. Method: Grid of cards + Chart.js Bar Chart for BOM Time. Interaction: Click to filter related solutions. Justification: Quantifies the problems, making them tangible. The chart immediately highlights the time-delay issue. Enhanced with subtle hover animations.
+        - Solution Tree: Goal: Organize. Method: HTML/CSS nested flexbox diagram. Justification: Visually represents the strategic hierarchy of solutions without using forbidden SVG/Mermaid. Animated to appear on scroll.
+        - Prioritization: Goal: Organize/Compare. Method: Three-column layout for High/Medium/Low priority. Interaction: Clickable cards linking back to pain points. Justification: Provides a clear, actionable roadmap. Animated to appear on scroll.
+        - Hardware Criteria: Goal: Inform. Method: Icon-based list. Justification: Simple, clean presentation of guiding principles. Animated to appear on scroll.
     -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
@@ -46,17 +46,37 @@
         .chart-container {
             position: relative;
             width: 100%;
-            max-width: 600px;
+            height: 300px; /* Default height for smaller screens */
+            max-height: 350px; /* Max height for default */
             margin-left: auto;
             margin-right: auto;
-            height: 350px;
-            max-height: 400px;
         }
-        @media (min-width: 768px) {
+        @media (min-width: 640px) { /* sm breakpoint */
             .chart-container {
-                height: 400px;
+                height: 350px;
+                max-height: 400px;
             }
         }
+        @media (min-width: 768px) { /* md breakpoint */
+            .chart-container {
+                height: 400px;
+                max-width: 600px;
+            }
+        }
+        @media (min-width: 1024px) { /* lg breakpoint */
+             .chart-container {
+                height: 400px;
+                max-width: 700px;
+            }
+        }
+        @media (min-width: 1280px) { /* xl breakpoint for very large screens/TVs */
+            .chart-container {
+                height: 450px;
+                max-width: 800px;
+            }
+        }
+
+
         .solution-tree-node {
             border: 2px solid #E0E0E0;
             padding: 1rem;
@@ -111,6 +131,165 @@
             height: 2px;
             background-color: #E0E0E0;
         }
+
+        .flow-node {
+            background-color: white;
+            border: 2px solid #81B29A;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            opacity: 0; /* Initial state for animation */
+            transform: translateY(20px) scale(0.95); /* Initial state for animation */
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+            width: 100%; /* Full width on smallest screens */
+            max-width: 280px; /* Default max-width for nodes */
+        }
+        @media (min-width: 640px) { /* sm breakpoint */
+            .flow-node {
+                max-width: 320px;
+            }
+        }
+        @media (min-width: 768px) { /* md breakpoint */
+            .flow-node {
+                max-width: 250px;
+            }
+        }
+        @media (min-width: 1024px) { /* lg breakpoint */
+            .flow-node {
+                max-width: 280px;
+            }
+        }
+        .flow-node.is-visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .flow-connector {
+            position: absolute;
+            left: calc(50% - 1px);
+            width: 2px;
+            background-color: #81B29A;
+            z-index: 5;
+        }
+        .flow-branch {
+            display: flex;
+            flex-direction: column; /* Stack branches on small screens */
+            align-items: center;
+            margin-top: 1.5rem;
+            position: relative;
+        }
+        @media (min-width: 768px) { /* md breakpoint */
+            .flow-branch {
+                flex-direction: row; /* Side-by-side on larger screens */
+                justify-content: space-around;
+            }
+        }
+        .flow-branch::before {
+            content: '';
+            position: absolute;
+            top: -1.5rem; /* Connects to the node above */
+            left: 50%;
+            width: 2px;
+            height: 1.5rem;
+            background-color: #81B29A;
+        }
+        .flow-branch-connector-h {
+            display: none; /* Hidden by default on small screens */
+        }
+        @media (min-width: 768px) { /* md breakpoint */
+            .flow-branch-connector-h {
+                display: block; /* Show horizontal connector on larger screens */
+                position: absolute;
+                top: -1.5rem;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background-color: #81B29A;
+                z-index: 5;
+            }
+        }
+        .flow-branch-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            padding-top: 1.5rem; /* Space for vertical connector from horizontal line */
+            width: 100%; /* Take full width within branch */
+            margin-bottom: 1.5rem; /* Space between stacked branch items */
+        }
+        @media (min-width: 768px) { /* md breakpoint */
+            .flow-branch-item {
+                width: auto; /* Auto width for flex items in a row */
+                margin-bottom: 0;
+            }
+        }
+        .flow-branch-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 2px;
+            height: 1.5rem;
+            background-color: #81B29A;
+        }
+         .decision-node {
+            background-color: #81B29A; /* Green for decision points */
+            color: white;
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            opacity: 0; /* Initial state for animation */
+            transform: translateY(20px) scale(0.95); /* Initial state for animation */
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+            width: 100%; /* Full width on smallest screens */
+            max-width: 280px; /* Default max-width for decision nodes */
+        }
+        @media (min-width: 640px) { /* sm breakpoint */
+            .decision-node {
+                max-width: 320px;
+            }
+        }
+        @media (min-width: 768px) { /* md breakpoint */
+            .decision-node {
+                max-width: 250px;
+            }
+        }
+        @media (min-width: 1024px) { /* lg breakpoint */
+            .decision-node {
+                max-width: 280px;
+            }
+        }
+
+        .decision-node.is-visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        /* Section entrance animation */
+        .animated-section {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .animated-section.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* General button styling and hover effect */
+        button {
+            transition: transform 0.2s ease, background-color 0.2s ease;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+
     </style>
 </head>
 <body class="antialiased">
@@ -138,14 +317,14 @@
     </header>
 
     <main>
-        <section id="hero" class="py-16 bg-white">
+        <section id="hero" class="py-16 bg-white animated-section">
             <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
                 <h2 class="text-4xl font-bold tracking-tight text-[#3D405B] sm:text-5xl">Streamlining Project Assessment & BOM Generation</h2>
                 <p class="mt-6 text-lg leading-8 text-gray-600 max-w-2xl mx-auto">An interactive overview of the current challenges in our project workflow and a strategic plan to enhance efficiency, reduce costs, and improve delivery times.</p>
             </div>
         </section>
 
-        <section id="problem" class="py-16 sm:py-24">
+        <section id="problem" class="py-16 sm:py-24 animated-section">
             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center">
                     <h2 class="text-3xl font-bold tracking-tight text-[#3D405B] sm:text-4xl">The Problem: An Inefficient Workflow</h2>
@@ -155,66 +334,106 @@
                 <div class="mt-16 grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
                     <div>
                         <h3 class="text-2xl font-semibold mb-6 text-center">As-Is Process Flow</h3>
-                        <div class="relative pl-8 border-l-2 border-[#81B29A]">
-                            <div class="timeline-step mb-12">
-                                <div class="absolute w-6 h-6 bg-[#81B29A] rounded-full -left-3 border-4 border-white"></div>
+                        <div class="relative flex flex-col items-center pb-8">
+                            <!-- Step 1 -->
+                            <div class="flow-node">
                                 <h4 class="font-bold text-lg">1. Initial Assessment</h4>
-                                <p class="text-gray-600">Begins with a plant visit, virtual call, or questionnaire.</p>
+                                <p class="text-gray-600 text-sm">Plant visit, virtual call, or questionnaire.</p>
                             </div>
-                            <div class="timeline-step mb-12">
-                               <div class="absolute w-6 h-6 bg-[#81B29A] rounded-full -left-3 border-4 border-white"></div>
+                            <div class="flow-connector h-8"></div>
+
+                            <!-- Step 2 -->
+                            <div class="flow-node">
                                 <h4 class="font-bold text-lg">2. Scheduling & Scoping</h4>
-                                <p class="text-gray-600">A detailed call is scheduled to decide on a high-level approach and gather low-level details.</p>
+                                <p class="text-gray-600 text-sm">Detailed call, high-level decision, gather low-level details.</p>
                             </div>
-                            <div class="timeline-step mb-12">
-                               <div class="absolute w-6 h-6 bg-[#81B29A] rounded-full -left-3 border-4 border-white"></div>
-                                <h4 class="font-bold text-lg">3. Assessment Type</h4>
-                                <p class="text-gray-600">Can be a high-level, KPI-based assessment or a detailed one requiring an SI.</p>
+                            <div class="flow-connector h-8"></div>
+
+                            <!-- Step 3 (Decision Point) -->
+                            <div class="decision-node">
+                                <h4 class="font-bold text-lg">3. Assessment Type?</h4>
+                                <p class="text-sm">KPI-based or Detailed (requires SI)?</p>
                             </div>
-                            <div class="timeline-step mb-12">
-                               <div class="absolute w-6 h-6 bg-[#81B29A] rounded-full -left-3 border-4 border-white"></div>
+                            <div class="flow-branch w-full relative">
+                                <div class="flow-branch-connector-h"></div>
+                                <div class="flow-branch-item">
+                                    <div class="flow-node w-full max-w-[200px] mt-4">
+                                        <h4 class="font-bold text-lg">3a. KPI-based Assessment</h4>
+                                        <p class="text-gray-600 text-sm">(Consultant Only)</p>
+                                    </div>
+                                </div>
+                                <div class="flow-branch-item">
+                                    <div class="flow-node w-full max-w-[200px] mt-4">
+                                        <h4 class="font-bold text-lg">3b. Detailed Assessment</h4>
+                                        <p class="text-gray-600 text-sm">(Requires SI)</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flow-connector h-8 mt-4"></div> <!-- Connector from decision to next step -->
+
+                            <!-- Step 4 -->
+                            <div class="flow-node">
                                 <h4 class="font-bold text-lg">4. Analysis</h4>
-                                <p class="text-gray-600">In-depth analysis of zones and machines based on an understanding document.</p>
+                                <p class="text-gray-600 text-sm">Analyze zone and machines (Understanding Document).</p>
                             </div>
-                            <div class="timeline-step mb-12">
-                               <div class="absolute w-6 h-6 bg-[#81B29A] rounded-full -left-3 border-4 border-white"></div>
-                                <h4 class="font-bold text-lg">5. Experience Check</h4>
-                                <p class="text-gray-600">Check for prior, similar work to leverage existing knowledge.</p>
+                            <div class="flow-connector h-8"></div>
+
+                            <!-- Step 5 (Decision Point) -->
+                            <div class="decision-node">
+                                <h4 class="font-bold text-lg">5. Prior Experience?</h4>
+                                <p class="text-sm">Have we done it before?</p>
                             </div>
-                             <div class="timeline-step">
-                               <div class="absolute w-6 h-6 bg-[#81B29A] rounded-full -left-3 border-4 border-white"></div>
-                                <h4 class="font-bold text-lg">6 & 7. BOM Generation</h4>
-                                <p class="text-gray-600">A complex, branching process of researching and combining existing or new devices to create the final Bill of Materials.</p>
+                            <div class="flow-branch w-full relative">
+                                <div class="flow-branch-connector-h"></div>
+                                <div class="flow-branch-item">
+                                    <div class="flow-node w-full max-w-[200px] mt-4">
+                                        <h4 class="font-bold text-lg">5a. Yes (BOM exists)</h4>
+                                        <p class="text-gray-600 text-sm">Give BOM considering Requirement.</p>
+                                    </div>
+                                </div>
+                                <div class="flow-branch-item">
+                                    <div class="flow-node w-full max-w-[200px] mt-4">
+                                        <h4 class="font-bold text-lg">5b. No (Research Needed)</h4>
+                                        <p class="text-gray-600 text-sm">Research existing devices/new devices.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flow-connector h-8 mt-4"></div> <!-- Connector from decision to end -->
+
+                            <!-- End Node or next step -->
+                            <div class="flow-node">
+                                <h4 class="font-bold text-lg">6. Final BOM Generation</h4>
+                                <p class="text-gray-600 text-sm">Final BOM with new combinations or devices.</p>
                             </div>
                         </div>
                     </div>
                     <div>
                         <h3 class="text-2xl font-semibold mb-6 text-center">Key Pain Points</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="card p-6">
+                            <div class="card p-6 pain-point-card" data-pain-point="BOM Creation Time">
                                 <h4 class="font-bold text-lg">BOM Creation Time</h4>
                                 <p class="text-gray-600">Takes 24-48 hours, delaying project kick-off.</p>
-                                <div class="chart-container mt-4 h-64 md:h-auto">
+                                <div class="chart-container mt-4">
                                     <canvas id="bomTimeChart"></canvas>
                                 </div>
                             </div>
-                            <div class="card p-6 flex flex-col justify-center">
+                            <div class="card p-6 flex flex-col justify-between pain-point-card" data-pain-point="Resource Dependency">
                                 <h4 class="font-bold text-lg">Resource Dependency</h4>
                                 <p class="text-gray-600">High reliance on experienced resources creates bottlenecks.</p>
                             </div>
-                            <div class="card p-6 flex flex-col justify-center">
+                            <div class="card p-6 flex flex-col justify-between pain-point-card" data-pain-point="Cost Discrepancy">
                                 <h4 class="font-bold text-lg">Cost Discrepancy</h4>
                                 <p class="text-gray-600">A 30% cost difference between high-level and detailed assessments leads to budget uncertainty.</p>
                             </div>
-                             <div class="card p-6">
+                             <div class="card p-6 flex flex-col justify-between pain-point-card" data-pain-point="Manual Research">
                                 <h4 class="font-bold text-lg">Manual Research</h4>
                                 <p class="text-gray-600">Time-consuming research for hardware, lead times, and pricing.</p>
                             </div>
-                            <div class="card p-6 flex flex-col justify-center">
+                            <div class="card p-6 flex flex-col justify-between pain-point-card" data-pain-point="Slow Assessment">
                                 <h4 class="font-bold text-lg">Slow Assessment</h4>
                                 <p class="text-gray-600">Assessment rate of ~3 machines per hour is inefficient.</p>
                             </div>
-                            <div class="card p-6 flex flex-col justify-center">
+                            <div class="card p-6 flex flex-col justify-between pain-point-card" data-pain-point="License & Tag Issues">
                                  <h4 class="font-bold text-lg">License & Tag Issues</h4>
                                 <p class="text-gray-600">Difficulty enabling licenses and handling missing tags.</p>
                             </div>
@@ -224,7 +443,7 @@
             </div>
         </section>
 
-        <section id="solution" class="py-16 sm:py-24 bg-white">
+        <section id="solution" class="py-16 sm:py-24 bg-white animated-section">
             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center">
                     <h2 class="text-3xl font-bold tracking-tight text-[#3D405B] sm:text-4xl">The Solution: A Strategic Approach</h2>
@@ -288,7 +507,7 @@
             </div>
         </section>
 
-        <section id="roadmap" class="py-16 sm:py-24">
+        <section id="roadmap" class="py-16 sm:py-24 animated-section">
             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
                  <div class="text-center">
                     <h2 class="text-3xl font-bold tracking-tight text-[#3D405B] sm:text-4xl">The Roadmap: A Prioritized Plan</h2>
@@ -321,7 +540,7 @@
                             </div>
                              <div class="card p-6">
                                 <h4 class="font-semibold">Automated Vendor & Price Comparison</h4>
-                                 <p class="text-sm text-gray-500">Refines hardware selection for better cost control.</p>
+                                 <p class="text-sm text-gray-500">Refines hardware selection by enabling quick and accurate comparisons.</p>
                             </div>
                         </div>
                     </div>
@@ -342,7 +561,7 @@
             </div>
         </section>
 
-        <section id="principles" class="py-16 sm:py-24 bg-white">
+        <section id="principles" class="py-16 sm:py-24 bg-white animated-section">
             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
                  <div class="text-center">
                     <h2 class="text-3xl font-bold tracking-tight text-[#3D405B] sm:text-4xl">Guiding Principles for Hardware Finalization</h2>
@@ -441,12 +660,13 @@
             const observerOptions = {
                 root: null,
                 rootMargin: '0px',
-                threshold: 0.5
+                threshold: 0.2
             };
 
-            const observer = new IntersectionObserver((entries, observer) => {
+            const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
                         const id = entry.target.getAttribute('id');
                         navLinks.forEach(link => {
                             link.classList.toggle('active', link.getAttribute('href') === `#${id}`);
@@ -454,12 +674,28 @@
                         if (mobileNav.value !== `#${id}`) {
                            mobileNav.value = `#${id}`;
                         }
+                    } else {
+                        entry.target.classList.remove('is-visible');
                     }
                 });
             }, observerOptions);
 
             sections.forEach(section => {
                 observer.observe(section);
+            });
+
+            const flowNodes = document.querySelectorAll('.flow-node, .decision-node');
+            const flowNodeObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        flowNodeObserver.unobserve(entry.target);
+                    }
+                });
+            }, { root: null, rootMargin: '0px', threshold: 0.5 });
+
+            flowNodes.forEach(node => {
+                flowNodeObserver.observe(node);
             });
 
             mobileNav.addEventListener('change', (e) => {
@@ -469,3 +705,4 @@
     </script>
 </body>
 </html>
+
